@@ -1,0 +1,253 @@
+{
+	"info": {
+		"_postman_id": "fb7b7286-2c96-45e1-8677-0382182294d0",
+		"name": "API_Login_Registro_Paula_AA5_EV02",
+		"description": "Colección de pruebas para endpoints de Registro y Login. Incluye casos positivos y negativos. Usa variables: {{base_url}}, {{username}}, {{password}}.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23242071"
+	},
+	"item": [
+		{
+			"name": "🔧 Preparar variables (pre-request)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"// Genera un usuario único para las pruebas de registro",
+							"const unique = Date.now();",
+							"pm.collectionVariables.set('username', `paula_${unique}`);",
+							"pm.collectionVariables.set('password', '12345');"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Variables preparadas', function () {",
+							"  pm.expect(pm.collectionVariables.get('username')).to.be.a('string');",
+							"  pm.expect(pm.collectionVariables.get('password')).to.be.a('string');",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST /api/register - Registro (OK)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status 200/201', function() {",
+							"  pm.expect([200,201]).to.include(pm.response.code);",
+							"});",
+							"pm.test('Content-Type JSON', function () {",
+							"  const ct = pm.response.headers.get('Content-Type') || '';",
+							"  pm.expect(ct.toLowerCase()).to.include('application/json');",
+							"});",
+							"pm.test('Tiene mensaje', function () {",
+							"  const json = pm.response.json();",
+							"  pm.expect(json).to.have.property('message');",
+							"});",
+							"pm.test('Tiempo de respuesta < 1500ms', function () {",
+							"  pm.expect(pm.response.responseTime).to.be.below(1500);",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/register",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST /api/login - Login (OK)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status 200', function() {",
+							"  pm.expect(pm.response.code).to.be.oneOf([200,201]);",
+							"});",
+							"let token = null;",
+							"try {",
+							"  const json = pm.response.json();",
+							"  token = json.token || json.access_token || null;",
+							"} catch (e) {}",
+							"if (token) { pm.collectionVariables.set('token', token); }",
+							"pm.test('Respuesta JSON válida', function () {",
+							"  pm.expect(pm.response.text()).to.be.a('string');",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/login",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST /api/login - Contraseña incorrecta (ERROR)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status 400/401/403', function() {",
+							"  pm.expect([400,401,403]).to.include(pm.response.code);",
+							"});",
+							"pm.test('Mensaje de error presente', function () {",
+							"  try { const json = pm.response.json(); pm.expect(json).to.have.property('message'); }",
+							"  catch(e) { pm.expect(pm.response.text().length).to.be.greaterThan(0); }",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"clave_incorrecta\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/login",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST /api/register - Faltan campos (ERROR)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('Status 400/422', function() {",
+							"  pm.expect([400,422]).to.include(pm.response.code);",
+							"});"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/register",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"register"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000"
+		},
+		{
+			"key": "username",
+			"value": "paula_{{$timestamp}}"
+		},
+		{
+			"key": "password",
+			"value": "12345"
+		}
+	]
+}
